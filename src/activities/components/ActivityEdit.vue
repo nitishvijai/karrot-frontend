@@ -468,6 +468,12 @@
       >
         {{ firstNonFieldError }}
       </div>
+
+      <div>
+        <p>This is a preview of how it will look:</p>
+        <ActivityItem :activity="previewActivity" />
+      </div>
+
       <div class="row justify-end q-gutter-sm q-mt-lg">
         <QBtn
           v-if="isNew"
@@ -543,10 +549,14 @@ import addDays from 'date-fns/addDays'
 import { defaultDuration } from '@/activities/settings'
 import { formatSeconds } from '@/activities/utils'
 import { objectDiff } from '@/utils/utils'
+import ActivityItem from '@/activities/components/ActivityItem'
+
+import { defaultActionStatusesFor } from '>/helpers' // TODO: don't use stuff from test helpers in main code
 
 export default {
   name: 'ActivityEdit',
   components: {
+    ActivityItem,
     QDate,
     QTime,
     QSlider,
@@ -572,6 +582,13 @@ export default {
     }
   },
   computed: {
+    previewActivity () {
+      return {
+        participants: [], // TODO won't show empty slots otherwise, could fix it in ActivityUsers...
+        ...this.edit,
+        ...defaultActionStatusesFor('save', 'join', 'leave'),
+      }
+    },
     requireRoleOptions () {
       const roles = ['approved', 'editor']
       return [
