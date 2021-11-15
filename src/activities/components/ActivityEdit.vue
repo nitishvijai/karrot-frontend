@@ -157,6 +157,13 @@
       </template>
 
       <div>
+        <QToggle
+          v-model="useRoles"
+          label="Restrict access by role"
+        />
+      </div>
+
+      <template v-if="!useRoles">
         <QInput
           v-model.number="edit.maxParticipants"
           type="number"
@@ -190,14 +197,139 @@
             />
           </template>
         </QInput>
-        <div
-          v-if="seriesMeta.isMaxParticipantsChanged"
-          class="q-ml-lg col-12 q-field__bottom text-warning"
+      </template>
+      <template v-else>
+        <QCard
+          flat
+          class="q-pa-md bg-grey-2"
         >
-          <QIcon name="warning" />
-          {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
+          <QSelect
+            v-model="edit.requireRole"
+            map-options
+            emit-value
+            label="Required role"
+            :options="simpleRoleOptions"
+            :error="hasError('requireRole')"
+            :error-message="firstError('requireRole')"
+            stack-label
+            outlined
+          >
+            <template #before>
+              <QIcon name="fas fa-key" />
+            </template>
+          </QSelect>
+
+          <QInput
+            v-model.number="edit.maxParticipants"
+            type="number"
+            stack-label
+            outlined
+            :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
+            :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
+            :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+            :error="hasError('maxParticipants')"
+            :error-message="firstError('maxParticipants')"
+            input-style="max-width: 100px"
+          >
+            <template #before>
+              <QIcon name="group" />
+            </template>
+            <QSlider
+              v-if="edit.maxParticipants > 0 && edit.maxParticipants <= 10"
+              v-model="edit.maxParticipants"
+              :min="1"
+              :max="10"
+              label
+              markers
+              class="q-mx-sm self-end"
+              style="min-width: 60px"
+            />
+            <template #after>
+              <QIcon
+                v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
+                name="undo"
+                @click="edit.maxParticipants = series.maxParticipants"
+              />
+            </template>
+          </QInput>
+          <div
+            v-if="seriesMeta.isMaxParticipantsChanged"
+            class="q-ml-lg col-12 q-field__bottom text-warning"
+          >
+            <QIcon name="warning" />
+            {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
+          </div>
+        </QCard>
+
+        <QCard
+          v-if="allowOpenParticipants"
+          flat
+          class="bg-grey-2"
+        >
+          <QCardSection>
+            <QField
+              readonly
+              borderless
+              label="Any other group member"
+            >
+              <template #before>
+                <QIcon name="fas fa-key" />
+              </template>
+            </QField>
+            <QInput
+              v-model.number="edit.maxOpenParticipants"
+              type="number"
+              stack-label
+              outlined
+              :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
+              :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
+              :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+              :error="hasError('maxOpenParticipants')"
+              :error-message="firstError('maxOpenParticipants')"
+              input-style="max-width: 100px"
+            >
+              <template #before>
+                <QIcon name="group" />
+              </template>
+              <QSlider
+                v-if="edit.maxOpenParticipants > 0 && edit.maxOpenParticipants <= 10"
+                v-model="edit.maxOpenParticipants"
+                :min="1"
+                :max="10"
+                label
+                markers
+                class="q-mx-sm self-end"
+                style="min-width: 60px"
+              />
+              <template #after>
+                <QIcon
+                  v-if="series ? series.maxOpenParticipants !== edit.maxOpenParticipants : false"
+                  name="undo"
+                  @click="edit.maxOpenParticipants = series.maxOpenParticipants"
+                />
+              </template>
+            </QInput>
+          </QCardSection>
+          <QCardActions align="right">
+            <QBtn
+              color="negative"
+              label="Remove open slots"
+              @click="allowOpenParticipants = false"
+            />
+          </QCardActions>
+        </QCard>
+
+        <div
+          v-if="!allowOpenParticipants"
+          class="row justify-end"
+        >
+          <QBtn
+            color="positive"
+            label="Add open slots"
+            @click="allowOpenParticipants = true"
+          />
         </div>
-      </div>
+      </template>
 
       <template v-if="ui === 'v1'">
         <div>
@@ -469,12 +601,12 @@
         {{ firstNonFieldError }}
       </div>
 
-      <div>
-        <p>This is a preview of how it will look:</p>
-        <ActivityItem :activity="previewActivity" />
-      </div>
-
       <div class="row justify-end q-gutter-sm q-mt-lg">
+        <QToggle
+          v-model="showPreview"
+          label="Show preview"
+        />
+        <QSpace />
         <QBtn
           v-if="isNew"
           type="button"
@@ -519,12 +651,19 @@
           {{ $t(isNew ? 'BUTTON.CREATE' : 'BUTTON.SAVE_CHANGES') }}
         </QBtn>
       </div>
+
+      <div v-if="showPreview">
+        <ActivityItem :activity="previewActivity" />
+      </div>
     </form>
   </div>
 </template>
 
 <script>
 import {
+  QCard,
+  QCardSection,
+  QCardActions,
   QDate,
   QTime,
   QSlider,
@@ -535,6 +674,7 @@ import {
   QDialog,
   QToggle,
   QSelect,
+  QSpace,
   Dialog,
   date,
 } from 'quasar'
@@ -567,6 +707,10 @@ export default {
     QDialog,
     QToggle,
     QSelect,
+    QCard,
+    QCardSection,
+    QCardActions,
+    QSpace,
   },
   mixins: [editMixin, statusMixin],
   props: {
@@ -577,11 +721,15 @@ export default {
   },
   data () {
     return {
-      ui: 'v1',
+      ui: 'v3',
       restrictAccess: false,
+      showPreview: false,
     }
   },
   computed: {
+    roles () {
+      return ['approved', 'editor']
+    },
     previewActivity () {
       return {
         participants: [], // TODO won't show empty slots otherwise, could fix it in ActivityUsers...
@@ -589,11 +737,18 @@ export default {
         ...defaultActionStatusesFor('save', 'join', 'leave'),
       }
     },
+    simpleRoleOptions () {
+      return this.roles.map(name => {
+        return {
+          label: name,
+          value: name,
+        }
+      })
+    },
     requireRoleOptions () {
-      const roles = ['approved', 'editor']
       return [
         { label: 'Any group member', value: null },
-        ...roles.map(name => {
+        ...this.roles.map(name => {
           return {
             label: `Group members with ${name} role`,
             value: name,
@@ -602,15 +757,28 @@ export default {
       ]
     },
     restrictAccessRoleOptions () {
-      const roles = ['approved', 'editor']
       return [
-        ...roles.map(name => {
+        ...this.roles.map(name => {
           return {
             label: `${name} members`,
             value: name,
           }
         }),
       ]
+    },
+    useRoles: {
+      get () {
+        return Boolean(this.edit.requireRole)
+      },
+      set (val) {
+        if (val) {
+          this.edit.requireRole = this.roles[0]
+        }
+        else {
+          this.edit.requireRole = null
+          this.edit.maxOpenParticipants = null
+        }
+      },
     },
     allowOpenParticipants: {
       get () {
