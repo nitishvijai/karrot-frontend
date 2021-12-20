@@ -53,12 +53,10 @@
         >
           <b class="text-orange">{{ $t('ACTIVITYLIST.ACTIVITY_STARTED') }}</b>
         </div>
-        <!-- eslint-disable vue/multiline-html-element-content-newline -->
-        <div
+        <Markdown
           v-if="activity.description"
-          class="q-my-xs multiline"
-        >{{ activity.description }}</div>
-        <!-- eslint-enable vue/multiline-html-element-content-newline -->
+          :source="activity.description"
+        />
         <div class="q-mt-sm q-mb-none full-width">
           <div
             v-for="participantType in participantTypes"
@@ -260,6 +258,7 @@ import {
 import ActivityUsers from './ActivityUsers'
 import CustomDialog from '@/utils/components/CustomDialog'
 import { absoluteURL } from '@/utils/absoluteURL'
+import Markdown from '@/utils/components/Markdown'
 
 export default {
   components: {
@@ -274,6 +273,7 @@ export default {
     QItemLabel,
     QRadio,
     ActivityUsers,
+    Markdown,
   },
   props: {
     activity: {

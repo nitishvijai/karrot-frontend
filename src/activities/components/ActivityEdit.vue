@@ -157,21 +157,16 @@
       </template>
 
       <div>
-        <QInput
+        <MarkdownInput
           v-model="edit.description"
           :error="hasError('description')"
           :error-message="firstError('description')"
           :label="$t('CREATEACTIVITY.COMMENT')"
           :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
-          type="textarea"
+          icon="info"
           maxlength="500"
-          autogrow
-          outlined
           @keyup.ctrl.enter="maybeSave"
         >
-          <template #before>
-            <QIcon name="info" />
-          </template>
           <template #after>
             <QIcon
               v-if="series ? series.description !== edit.description : false"
@@ -179,7 +174,7 @@
               @click="edit.description = series.description"
             />
           </template>
-        </QInput>
+        </MarkdownInput>
         <div
           v-if="seriesMeta.isDescriptionChanged"
           class="q-ml-lg col-12 q-field__bottom text-warning"
@@ -404,6 +399,7 @@ import { objectDiff } from '@/utils/utils'
 import ActivityItem from '@/activities/components/ActivityItem'
 
 import { defaultActionStatusesFor } from '>/helpers' // TODO: don't use stuff from test helpers in main code
+import MarkdownInput from '@/utils/components/MarkdownInput'
 
 export default {
   name: 'ActivityEdit',
@@ -423,6 +419,7 @@ export default {
     QCardSection,
     QCardActions,
     QSpace,
+    MarkdownInput,
   },
   mixins: [editMixin, statusMixin],
   props: {
