@@ -157,6 +157,415 @@
       </template>
 
       <div>
+        <QToggle
+          v-model="useRoles"
+          label="Restrict access by role"
+        />
+      </div>
+
+      <template v-if="!useRoles">
+        <QInput
+          v-model.number="edit.maxParticipants"
+          type="number"
+          stack-label
+          outlined
+          :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
+          :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
+          :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+          :error="hasError('maxParticipants')"
+          :error-message="firstError('maxParticipants')"
+          input-style="max-width: 100px"
+        >
+          <template #before>
+            <QIcon name="group" />
+          </template>
+          <QSlider
+            v-if="edit.maxParticipants > 0 && edit.maxParticipants <= 10"
+            v-model="edit.maxParticipants"
+            :min="1"
+            :max="10"
+            label
+            markers
+            class="q-mx-sm self-end"
+            style="min-width: 60px"
+          />
+          <template #after>
+            <QIcon
+              v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
+              name="undo"
+              @click="edit.maxParticipants = series.maxParticipants"
+            />
+          </template>
+        </QInput>
+      </template>
+      <template v-else>
+        <QCard
+          flat
+          class="q-pa-md bg-grey-2"
+        >
+          <QSelect
+            v-model="edit.requireRole"
+            map-options
+            emit-value
+            label="Required role"
+            :options="simpleRoleOptions"
+            :error="hasError('requireRole')"
+            :error-message="firstError('requireRole')"
+            stack-label
+            outlined
+          >
+            <template #before>
+              <QIcon name="fas fa-key" />
+            </template>
+          </QSelect>
+
+          <QInput
+            v-model.number="edit.maxParticipants"
+            type="number"
+            stack-label
+            outlined
+            :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
+            :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
+            :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+            :error="hasError('maxParticipants')"
+            :error-message="firstError('maxParticipants')"
+            input-style="max-width: 100px"
+          >
+            <template #before>
+              <QIcon name="group" />
+            </template>
+            <QSlider
+              v-if="edit.maxParticipants > 0 && edit.maxParticipants <= 10"
+              v-model="edit.maxParticipants"
+              :min="1"
+              :max="10"
+              label
+              markers
+              class="q-mx-sm self-end"
+              style="min-width: 60px"
+            />
+            <template #after>
+              <QIcon
+                v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
+                name="undo"
+                @click="edit.maxParticipants = series.maxParticipants"
+              />
+            </template>
+          </QInput>
+          <div
+            v-if="seriesMeta.isMaxParticipantsChanged"
+            class="q-ml-lg col-12 q-field__bottom text-warning"
+          >
+            <QIcon name="warning" />
+            {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
+          </div>
+        </QCard>
+
+        <QCard
+          v-if="allowOpenParticipants"
+          flat
+          class="bg-grey-2"
+        >
+          <QCardSection>
+            <QField
+              readonly
+              borderless
+              label="Any other group member"
+            >
+              <template #before>
+                <QIcon name="fas fa-key" />
+              </template>
+            </QField>
+            <QInput
+              v-model.number="edit.maxOpenParticipants"
+              type="number"
+              stack-label
+              outlined
+              :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
+              :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
+              :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+              :error="hasError('maxOpenParticipants')"
+              :error-message="firstError('maxOpenParticipants')"
+              input-style="max-width: 100px"
+            >
+              <template #before>
+                <QIcon name="group" />
+              </template>
+              <QSlider
+                v-if="edit.maxOpenParticipants > 0 && edit.maxOpenParticipants <= 10"
+                v-model="edit.maxOpenParticipants"
+                :min="1"
+                :max="10"
+                label
+                markers
+                class="q-mx-sm self-end"
+                style="min-width: 60px"
+              />
+              <template #after>
+                <QIcon
+                  v-if="series ? series.maxOpenParticipants !== edit.maxOpenParticipants : false"
+                  name="undo"
+                  @click="edit.maxOpenParticipants = series.maxOpenParticipants"
+                />
+              </template>
+            </QInput>
+          </QCardSection>
+          <QCardActions align="right">
+            <QBtn
+              color="negative"
+              label="Remove open slots"
+              @click="allowOpenParticipants = false"
+            />
+          </QCardActions>
+        </QCard>
+
+        <div
+          v-if="!allowOpenParticipants"
+          class="row justify-end"
+        >
+          <QBtn
+            color="positive"
+            label="Add slots"
+            @click="addSlots()"
+          />
+        </div>
+      </template>
+
+      <template v-if="ui === 'v1'">
+        <div>
+          <QSelect
+            v-model="edit.requireRole"
+            map-options
+            emit-value
+            label="Access"
+            hint="Who can join?"
+            :options="requireRoleOptions"
+            :error="hasError('requireRole')"
+            :error-message="firstError('requireRole')"
+            stack-label
+            hide-bottom-space
+            outlined
+          >
+            <template #before>
+              <QIcon name="fas fa-key" />
+            </template>
+            <template
+              v-if="edit.requireRole"
+              #after
+            >
+              <QToggle
+                v-model="allowOpenParticipants"
+                label="Allow guests"
+              />
+              <!--
+              <QSelect
+                v-model="openParticipations"
+                map-options
+                emit-value
+                :options="[
+                  { label: 'No open participants', value: null },
+
+                ]"
+                :error="hasError('requireRole')"
+                :error-message="firstError('requireRole')"
+                outlined
+                hide-bottom-space
+              />
+              -->
+            </template>
+          </QSelect>
+        </div>
+
+        <!--
+        <div>
+          <QField
+            v-model="edit.requireRole"
+            stack-label
+            borderless
+            outlined
+            hint="Who can join?"
+          >
+            <template #before>
+              <QIcon name="fas fa-key" />
+            </template>
+            <template #control>
+              <QSelect
+                v-model="edit.requireRole"
+                map-options
+                emit-value
+                label="Access"
+                :options="requireRoleOptions"
+                :error="hasError('requireRole')"
+                :error-message="firstError('requireRole')"
+                hide-bottom-space
+                borderless
+              />
+            </template>
+            <template #append>
+              <QSelect
+                v-model="edit.requireRole"
+                map-options
+                emit-value
+                :options="requireRoleOptions"
+                :error="hasError('requireRole')"
+                :error-message="firstError('requireRole')"
+                outlined
+                hide-bottom-space
+              />
+            </template>
+          </QField>
+        </div>
+        -->
+
+        <div v-if="edit.requireRole && allowOpenParticipants">
+          <QInput
+            v-model.number="edit.maxOpenParticipants"
+            type="number"
+            stack-label
+            outlined
+            label="Max Guest Slots"
+            hint="How many people can participate who don't have the role"
+            :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+            :error="hasError('maxOpenParticipants')"
+            :error-message="firstError('maxOpenParticipants')"
+            input-style="max-width: 100px"
+          >
+            <template #before>
+              <QIcon name="group" />
+            </template>
+            <QSlider
+              v-if="edit.maxOpenParticipants > 0 && edit.maxOpenParticipants <= 10"
+              v-model="edit.maxOpenParticipants"
+              :min="1"
+              :max="10"
+              label
+              markers
+              class="q-mx-sm self-end"
+              style="min-width: 60px"
+            />
+            <template #after>
+              <QIcon
+                v-if="series ? series.maxOpenParticipants !== edit.maxOpenParticipants : false"
+                name="undo"
+                @click="edit.maxOpenParticipants = series.maxOpenParticipants"
+              />
+            </template>
+          </QInput>
+          <div
+            v-if="seriesMeta.isMaxOpenParticipantsChanged"
+            class="q-ml-lg col-12 q-field__bottom text-warning"
+          >
+            <QIcon name="warning" />
+            {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
+          </div>
+        </div>
+      </template>
+
+      <template v-if="ui === 'v2'">
+        <div>
+          <QField
+            v-model="edit.requireRole"
+            stack-label
+            outlined
+            hint="Who can join?"
+          >
+            <template #before>
+              <QIcon name="fas fa-key" />
+            </template>
+            <template #control>
+              <QToggle
+                v-model="restrictAccess"
+                label="Restrict access"
+              />
+              <template v-if="restrictAccess">
+                <QSelect
+                  v-model="edit.requireRole"
+                  class="q-ml-sm"
+                  map-options
+                  emit-value
+                  :options="restrictAccessRoleOptions"
+                  :error="hasError('requireRole')"
+                  :error-message="firstError('requireRole')"
+                  stack-label
+                  hide-bottom-space
+                  filled
+                  square
+                  dense
+                >
+                  <template #prepend>
+                    to
+                  </template>
+                </QSelect>
+
+                <QToggle
+                  v-model="allowOpenParticipants"
+                  label="open slots"
+                />
+
+                <template v-if="allowOpenParticipants">
+                  <QInput
+                    v-model.number="edit.maxOpenParticipants"
+                    class="q-ml-md"
+                    style="width: 80px;"
+                    type="number"
+                    filled
+                    square
+                    dense
+                  />
+
+                  <!--
+                  <QInput
+                    v-model.number="edit.maxOpenParticipants"
+                    type="number"
+                    stack-label
+                    outlined
+                    label="Max Guest Slots"
+                    hint="How many people can participate who don't have the role"
+                    :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+                    :error="hasError('maxOpenParticipants')"
+                    :error-message="firstError('maxOpenParticipants')"
+                    input-style="max-width: 100px"
+                  >
+                    <template #before>
+                      <QIcon name="group" />
+                    </template>
+                    <QSlider
+                      v-if="edit.maxOpenParticipants > 0 && edit.maxOpenParticipants <= 10"
+                      v-model="edit.maxOpenParticipants"
+                      :min="1"
+                      :max="10"
+                      label
+                      markers
+                      class="q-mx-sm self-end"
+                      style="min-width: 60px"
+                    />
+                    <template #after>
+                      <QIcon
+                        v-if="series ? series.maxOpenParticipants !== edit.maxOpenParticipants : false"
+                        name="undo"
+                        @click="edit.maxOpenParticipants = series.maxOpenParticipants"
+                      />
+                    </template>
+                  </QInput>
+                  <div
+                    v-if="seriesMeta.isMaxOpenParticipantsChanged"
+                    class="q-ml-lg col-12 q-field__bottom text-warning"
+                  >
+                    <QIcon name="warning" />
+                    {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
+                  -->
+                </template>
+              </template>
+            </template>
+          </QField>
+        </div>
+      </template>
+
+      <template v-if="ui === 'v4'">
+        hello
+      </template>
+
+      <div>
         <QInput
           v-model="edit.description"
           :error="hasError('description')"
@@ -187,120 +596,6 @@
           <QIcon name="warning" />
           {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
         </div>
-      </div>
-
-      <QCard
-        v-for="(participantType, idx) in participantTypes"
-        :key="participantType.id || `new-${idx}`"
-      >
-        <QCardSection>
-          <QInput
-            v-model="participantType.name"
-            label="Purpose"
-            :error="hasError('name')"
-            :error-message="firstError('name')"
-            outlined
-          >
-            <template #before>
-              <QIcon name="fas fa-key" />
-            </template>
-          </QInput>
-          <QSelect
-            v-model="participantType.role"
-            map-options
-            emit-value
-            label="Require role"
-            :options="roleOptions"
-            :error="hasError('role')"
-            :error-message="firstError('role')"
-            outlined
-          >
-            <template #before>
-              <QIcon name="fas fa-key" />
-            </template>
-          </QSelect>
-
-          <QInput
-            v-model.number="participantType.maxParticipants"
-            type="number"
-            stack-label
-            outlined
-            :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
-            :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
-            :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
-            :error="hasError('maxParticipants')"
-            :error-message="firstError('maxParticipants')"
-            input-style="max-width: 100px"
-          >
-            <template #before>
-              <QIcon name="group" />
-            </template>
-            <QSlider
-              v-if="participantType.maxParticipants > 0 && participantType.maxParticipants <= 10"
-              v-model="participantType.maxParticipants"
-              :min="1"
-              :max="10"
-              label
-              markers
-              class="q-mx-sm self-end"
-              style="min-width: 60px"
-            />
-            <!--
-            <template #after>
-              <QIcon
-                v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
-                name="undo"
-                @click="edit.maxParticipants = series.maxParticipants"
-              />
-            </template>
-            -->
-          </QInput>
-          <div
-            v-if="seriesMeta.isMaxParticipantsChanged"
-            class="q-ml-lg col-12 q-field__bottom text-warning"
-          >
-            <QIcon name="warning" />
-            {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
-          </div>
-          <QInput
-            v-model="participantType.description"
-            :error="hasError('description')"
-            :error-message="firstError('description')"
-            :label="$t('CREATEACTIVITY.COMMENT')"
-            :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
-            type="textarea"
-            maxlength="500"
-            autogrow
-            outlined
-            @keyup.ctrl.enter="maybeSave"
-          >
-            <template #before>
-              <QIcon name="info" />
-            </template>
-            <template #after>
-              <QIcon
-                v-if="series ? series.description !== edit.description : false"
-                name="undo"
-                @click="edit.description = series.description"
-              />
-            </template>
-          </QInput>
-          <div class="row justify-end">
-            <QBtn
-              label="Remove slots"
-              :disable="participantTypes.length === 1"
-              @click="removeSlots(participantType)"
-            />
-          </div>
-        </QCardSection>
-      </QCard>
-
-      <div class="row justify-end">
-        <QBtn
-          color="positive"
-          label="Add slots"
-          @click="addSlots()"
-        />
       </div>
 
       <div
@@ -362,10 +657,7 @@
       </div>
 
       <div v-if="showPreview">
-        <ActivityItem
-          :activity="previewActivity"
-          :roles="roles"
-        />
+        <ActivityItem :activity="previewActivity" />
       </div>
     </form>
   </div>
@@ -430,10 +722,6 @@ export default {
       type: Object,
       default: null,
     },
-    roles: {
-      type: Array,
-      required: true,
-    },
   },
   data () {
     return {
@@ -443,8 +731,8 @@ export default {
     }
   },
   computed: {
-    participantTypes () {
-      return this.edit.participantTypes.filter(entry => !entry._removed)
+    roles () {
+      return ['approved', 'editor']
     },
     previewActivity () {
       return {
@@ -453,17 +741,56 @@ export default {
         ...defaultActionStatusesFor('save', 'join', 'leave'),
       }
     },
-    roleOptions () {
-      return [
-        'member',
-        'editor',
-        'approved',
-      ].map(name => {
+    simpleRoleOptions () {
+      return this.roles.map(name => {
         return {
           label: name,
           value: name,
         }
       })
+    },
+    requireRoleOptions () {
+      return [
+        { label: 'Any group member', value: null },
+        ...this.roles.map(name => {
+          return {
+            label: `Group members with ${name} role`,
+            value: name,
+          }
+        }),
+      ]
+    },
+    restrictAccessRoleOptions () {
+      return [
+        ...this.roles.map(name => {
+          return {
+            label: `${name} members`,
+            value: name,
+          }
+        }),
+      ]
+    },
+    useRoles: {
+      get () {
+        return Boolean(this.edit.requireRole)
+      },
+      set (val) {
+        if (val) {
+          this.edit.requireRole = this.roles[0]
+        }
+        else {
+          this.edit.requireRole = null
+          this.edit.maxOpenParticipants = null
+        }
+      },
+    },
+    allowOpenParticipants: {
+      get () {
+        return this.edit.maxOpenParticipants !== null && this.edit.maxOpenParticipants > 0
+      },
+      set (val) {
+        this.edit.maxOpenParticipants = val ? 2 : null
+      },
     },
     activityType () {
       return this.value.activityType
@@ -558,22 +885,22 @@ export default {
       return this.$q.screen.width < 450 || this.$q.screen.height < 450
     },
   },
-  methods: {
-    addSlots () {
-      const existingRoles = this.edit.participantTypes.map(entry => entry.role)
-      this.edit.participantTypes.push({
-        role: this.roles.find(role => !existingRoles.includes(role)) || this.roles[0],
-        maxParticipants: 2,
-      })
-    },
-    removeSlots (participantType) {
-      if (participantType.id) {
-        this.$set(participantType, '_removed', true)
+  watch: {
+    restrictAccess (val) {
+      if (val) {
+        this.edit.requireRole = this.restrictAccessRoleOptions[0]
       }
       else {
-        const idx = this.edit.participantTypes.indexOf(participantType)
-        this.edit.participantTypes.splice(idx, 1)
+        this.edit.requireRole = null
       }
+    },
+  },
+  methods: {
+    addSlots () {
+      this.edit.participantTypes.push({
+        role: 'FOO',
+        maxParticipants: 2,
+      })
     },
     futureDates (dateString) {
       return date.extractDate(`${dateString} 23:59`, 'YYYY/MM/DD HH:mm') > this.now

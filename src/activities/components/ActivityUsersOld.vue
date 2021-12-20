@@ -7,13 +7,14 @@
       style="width: 100%"
       @resize="calculateSlotsPerRow"
     />
+    <pre>{{ activity.participantTypes }}</pre>
     <div
-      v-for="participant in participants"
-      :key="'participant' + participant.user.id"
+      v-for="user in activity.participants"
+      :key="'participant' + user.id"
       class="relative-position pic-wrapper"
     >
       <template
-        v-if="false && participant.user.isCurrentUser && !activity.hasStarted"
+        v-if="user.isCurrentUser && !activity.hasStarted"
       >
         <CurrentUser
           v-if="!isLeaving"
@@ -33,18 +34,17 @@
       </template>
       <template v-else>
         <div
-          v-if="isNewcomer(participant.user) && !participant.user.isCurrentUser"
+          v-if="isNewcomer(user) && !user.isCurrentUser"
           class="newcomer-box"
-          :title="$t('USERDATA.NEWCOMER_GUIDANCE', { userName: participant.user.displayName })"
+          :title="$t('USERDATA.NEWCOMER_GUIDANCE', { userName: user.displayName })"
         />
         <ProfilePicture
-          :user="participant.user"
+          :user="user"
           :size="size"
         />
       </template>
     </div>
 
-    <!--
     <div
       v-if="isJoining && !activity.isUserMember"
       class="emptySlots"
@@ -61,7 +61,6 @@
       :show-join="!activity.isUserMember"
       @join="$emit('join')"
     />
-    -->
 
     <EmptySlot
       v-for="n in emptySlots"
@@ -107,10 +106,6 @@ export default {
       type: Object,
       required: true,
     },
-    participantType: {
-      type: Object,
-      required: true,
-    },
     size: {
       type: Number,
       default: 36,
@@ -125,9 +120,6 @@ export default {
     ...mapGetters({
       currentUser: 'auth/user',
     }),
-    participants () {
-      return this.activity.participants.filter(participant => participant.participantType.id === this.participantType.id)
-    },
     isJoining () {
       // if request is in progress and user is not member yet (watches out for websocket updates!)
       return this.activity.joinStatus.pending && !this.activity.isUserMember
@@ -137,26 +129,22 @@ export default {
       return this.activity.leaveStatus.pending && this.activity.isUserMember
     },
     hasUnlimitedPlaces () {
-      return this.maxParticipants === null
-    },
-    maxParticipants () {
-      return this.participantType.maxParticipants
+      return this.activity.maxParticipants === null
     },
     emptyPlaces () {
       if (this.hasUnlimitedPlaces) {
         return 9999999999
       }
-      if (this.participants) {
-        // const removeOne = (this.isJoining || this.canJoin) ? 1 : 0
-        const removeOne = 0
-        return Math.max(this.maxParticipants - this.participants.length - removeOne, 0)
+      if (this.activity.participants) {
+        const removeOne = (this.isJoining || this.canJoin) ? 1 : 0
+        return Math.max(this.activity.maxParticipants - this.activity.participants.length - removeOne, 0)
       }
       return 0
     },
     emptySlots () {
-      if (this.participants) {
+      if (this.activity.participants) {
         const minToShow = Math.min(1, this.emptyPlaces)
-        const maxToShow = Math.max(minToShow, this.slotsPerRow - this.participants.length - 1)
+        const maxToShow = Math.max(minToShow, this.slotsPerRow - this.activity.participants.length - 1)
         return Math.min(this.emptyPlaces, maxToShow)
       }
       return 0

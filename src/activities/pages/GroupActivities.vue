@@ -2,6 +2,7 @@
   <div>
     <ActivityList
       :activities="activities"
+      :roles="roles"
       :pending="pending"
       place-link
       filter
@@ -67,6 +68,7 @@ export default {
       activityTypes: 'activityTypes/byCurrentGroup',
       pending: 'activities/fetchingForCurrentGroup',
       places: 'places/byCurrentGroup',
+      roles: 'currentGroup/roles',
     }),
     hasNoActivities () {
       if (this.pending) return false

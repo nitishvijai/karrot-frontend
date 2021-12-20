@@ -23,6 +23,12 @@ export default {
       const place = rootGetters['places/get'](activity.place)
       const activityType = rootGetters['activityTypes/get'](activity.activityType)
       const group = place && place.group
+      const participants = activity.participants.map(participant => {
+        return {
+          ...participant,
+          user: rootGetters['users/get'](participant.user),
+        }
+      })
       return {
         ...activity,
         isUserMember: activity.participants.includes(userId),
@@ -31,7 +37,16 @@ export default {
         place,
         activityType,
         group,
-        participants: activity.participants.map(rootGetters['users/get']),
+        participants,
+        participantTypes: activity.participantTypes.map(participantType => {
+          const roleParticipants = participants.filter(({ role }) => role === participantType.role)
+          return {
+            ...participantType,
+            participants: roleParticipants,
+            isEmpty: roleParticipants.length === 0,
+            isFull: participantType.maxParticipants > 0 && roleParticipants >= participantType.maxParticipants,
+          }
+        }),
         feedbackGivenBy: activity.feedbackGivenBy ? activity.feedbackGivenBy.map(rootGetters['users/get']) : [],
         feedbackDismissedBy: activity.feedbackDismissedBy ? activity.feedbackDismissedBy.map(rootGetters['users/get']) : [],
         hasStarted: activity.date <= reactiveNow.value && activity.dateEnd > reactiveNow.value,
@@ -88,9 +103,9 @@ export default {
       async fetch ({ commit }, activityId) {
         commit('update', [await activities.get(activityId)])
       },
-      async join ({ dispatch }, activityId) {
+      async join ({ dispatch }, { activityId, participantTypeId }) {
         try {
-          await activities.join(activityId)
+          await activities.join({ activityId, participantTypeId })
         }
         catch (error) {
           if (isValidationError(error)) dispatch('fetch', activityId)

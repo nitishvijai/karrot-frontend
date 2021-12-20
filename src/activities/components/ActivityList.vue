@@ -238,6 +238,7 @@
           v-measure
           :dense="dense"
           :activity="activity"
+          :roles="roles"
           :place-link="placeLink"
           @join="$emit('join', arguments[0])"
           @leave="$emit('leave', arguments[0])"
@@ -301,6 +302,10 @@ export default {
   ],
   props: {
     activities: {
+      type: Array,
+      required: true,
+    },
+    roles: {
       type: Array,
       required: true,
     },

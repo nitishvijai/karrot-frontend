@@ -145,6 +145,7 @@
                 :value="activity"
                 :status="activity.saveStatus"
                 :series="series"
+                :roles="roles"
                 @save="saveActivity"
                 @reset="resetActivity"
               />
@@ -198,6 +199,7 @@
         <ActivityEdit
           :value="newActivity"
           :status="activityCreateStatus"
+          :roles="roles"
           @save="saveNewActivity"
           @cancel="cancelNewActivity"
           @reset="resetNewActivity"
@@ -239,6 +241,7 @@
             v-if="visible.activity[activity.id]"
             :value="activity"
             :status="activity.saveStatus"
+            :roles="roles"
             @save="saveActivity"
             @reset="resetActivity"
           />
@@ -311,6 +314,7 @@ export default {
       fetchActivityPending: 'activities/fetchingForCurrentGroup',
       activityCreateStatus: 'activities/createStatus',
       seriesCreateStatus: 'activitySeries/createStatus',
+      roles: 'currentGroup/roles',
     }),
     oneTimeActivities () {
       // filter out already started activities
@@ -375,9 +379,13 @@ export default {
       const date = addHours(startOfTomorrow(), 10) // default to 10am tomorrow
       this.newActivity = {
         activityType,
-        maxParticipants: 2,
-        maxOpenParticipants: null,
-        requireRole: null,
+        participantTypes: [
+          {
+            role: 'member',
+            maxParticipants: 2,
+            description: '',
+          },
+        ],
         description: '',
         date,
         dateEnd: addSeconds(date, defaultDuration),

@@ -31,6 +31,7 @@
     <ActivityList
       :pending="fetchPending"
       :activities="activities"
+      :roles="roles"
       :ics-url="activitiesIcsUrl"
       @join="join"
       @leave="leave"
@@ -64,6 +65,7 @@ export default {
       activitiesIcsUrl: 'activities/icsUrlForCurrentPlace',
       fetchPending: 'activities/fetchingForCurrentGroup',
       isEditor: 'currentGroup/isEditor',
+      roles: 'currentGroup/roles',
     }),
     hasNoActivities () {
       if (this.fetchPending) return false
