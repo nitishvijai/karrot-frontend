@@ -78,7 +78,7 @@ export default {
       currentUser: 'auth/user',
     }),
     participants () {
-      return this.activity.participants.filter(participant => participant.participantType.id === this.participantType.id)
+      return (this.activity.participants || []).filter(participant => participant.participantType.id === this.participantType.id)
     },
     hasUnlimitedPlaces () {
       return this.maxParticipants === null

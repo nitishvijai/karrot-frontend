@@ -97,8 +97,8 @@
                 >
                   <QItemSection avatar>
                     <QRadio
-                      v-model="joinParticipantTypeId"
-                      :val="participantType.id"
+                      v-model="joinParticipantType"
+                      :val="participantType"
                       color="orange"
                       :disable="!roles.includes(participantType.role) || participantType.isFull"
                     />
@@ -150,7 +150,7 @@
                 color="primary"
                 data-autofocus
                 :label="$t('BUTTON.OF_COURSE')"
-                @click="$emit('join', { id: activity.id, participantTypeId: joinParticipantTypeId } )"
+                @click="$emit('join', { id: activity.id, participantTypeId: joinParticipantType.id } )"
               />
             </template>
           </CustomDialog>
@@ -314,7 +314,7 @@ export default {
     return {
       joinDialog: false,
       leaveDialog: false,
-      joinParticipantTypeId: null,
+      joinParticipantType: null,
     }
   },
   computed: {
@@ -358,8 +358,8 @@ export default {
   },
   methods: {
     join () {
-      if (this.joinParticipantTypeId === null) {
-        this.joinParticipantTypeId = this.availableParticipantTypes.length > 0 && this.availableParticipantTypes[0].id
+      if (this.joinParticipantType === null && this.availableParticipantTypes.length > 0) {
+        this.joinParticipantType = this.availableParticipantTypes[0]
       }
       this.leaveDialog = false
       this.joinDialog = true

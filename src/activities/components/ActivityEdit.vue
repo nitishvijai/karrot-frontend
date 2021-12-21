@@ -426,7 +426,6 @@ export default {
     },
     previewActivity () {
       return {
-        participants: [], // TODO won't show empty slots otherwise, could fix it in ActivityUsers...
         ...this.edit,
         // fake statuses, just enough for the preview
         joinStatus: {
