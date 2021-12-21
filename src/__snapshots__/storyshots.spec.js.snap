@@ -2256,37 +2256,7 @@ exports[`Storyshots ActivityUsers join pending 1`] = `
 </div>
 `;
 
-exports[`Storyshots ActivityUsers joinable 1`] = `
-<div class="row justify-start"><object tabindex="-1" type="text/html" data="about:blank" aria-hidden="true" style="display:block;position:absolute;top:0;left:0;right:0;bottom:0;height:100%;width:100%;overflow:hidden;pointer-events:none;z-index:-1;"></object>
-  <div class="relative-position pic-wrapper">
-    <!---->
-    <div class="wrapper" style="width:36px;height:36px;"><a title="Mira Bellenbaum">
-        <div text="Mira Bellenbaum" seed="1" class="randomArt fill"></div>
-      </a></div>
-  </div>
-  <div class="relative-position pic-wrapper">
-    <!---->
-    <div class="wrapper" style="width:36px;height:36px;"><a title="Max Mustermann">
-        <div text="Max Mustermann" seed="2" class="randomArt fill"></div>
-      </a></div>
-  </div>
-  <div class="relative-position pic-wrapper">
-    <!---->
-    <div class="wrapper" style="width:36px;height:36px;"><a title="Karl Karlson">
-        <div text="Karl Karlson" seed="3" class="randomArt fill"></div>
-      </a></div>
-  </div>
-  <!---->
-  <div class="user-slot-wrapper active" style="width:36px;height:36px;">
-    <div title="Join" class="show-picture-on-hover">
-      <div class="wrapper" style="width:36px;height:36px;">
-        <div text="Current User" seed="5" class="randomArt fill"></div>
-      </div>
-    </div>
-  </div>
-  <!---->
-</div>
-`;
+exports[`Storyshots ActivityUsers joinable 1`] = `<!---->`;
 
 exports[`Storyshots ActivityUsers leavable (current first) 1`] = `
 <div class="row justify-start"><object tabindex="-1" type="text/html" data="about:blank" aria-hidden="true" style="display:block;position:absolute;top:0;left:0;right:0;bottom:0;height:100%;width:100%;overflow:hidden;pointer-events:none;z-index:-1;"></object>

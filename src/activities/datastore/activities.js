@@ -31,9 +31,8 @@ export default {
       })
       return {
         ...activity,
-        isUserMember: activity.participants.includes(userId),
+        isUserMember: activity.participants.map(entry => entry.user).includes(userId),
         isEmpty: activity.participants.length === 0,
-        isFull: activity.maxParticipants > 0 && activity.participants.length >= activity.maxParticipants,
         place,
         activityType,
         group,
@@ -103,7 +102,7 @@ export default {
       async fetch ({ commit }, activityId) {
         commit('update', [await activities.get(activityId)])
       },
-      async join ({ dispatch }, { activityId, participantTypeId }) {
+      async join ({ dispatch }, { id: activityId, participantTypeId }) {
         try {
           await activities.join({ activityId, participantTypeId })
         }

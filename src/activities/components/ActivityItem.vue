@@ -1,5 +1,6 @@
 <template>
   <QCard
+    class="activity-item"
     :class="{ full: activity.isFull }"
   >
     <QCardSection
@@ -62,22 +63,19 @@
             v-for="participantType in participantTypes"
             :key="participantType.id"
           >
-            <template v-if="showRoleInfo">
-              <template v-if="participantType.name">
-                <strong>{{ participantType.name }}</strong> ({{ participantType.role }})
-              </template>
-              <strong v-else>
-                {{ participantType.role }}
-              </strong>
-              <template v-if="roles.includes(participantType.role)">
-                <div>{{ participantType.description }}</div>
-              </template>
+            <template v-if="participantType.name">
+              <strong>{{ participantType.name }}</strong> ({{ participantType.role }})
             </template>
+            <strong v-else-if="participantType.role !== 'member'">
+              {{ participantType.role }}
+            </strong>
+            <Markdown
+              v-if="participantType.description"
+              :source="participantType.description"
+            />
             <ActivityUsers
               :activity="activity"
               :participant-type="participantType"
-              @leave="leave"
-              @join="join"
             />
           </div>
           <CustomDialog v-model="joinDialog">
@@ -90,35 +88,52 @@
               {{ $t('ACTIVITYLIST.ITEM.JOIN_CONFIRMATION_HEADER', { activityType: activity.activityType.translatedName }) }}
             </template>
             <template #message>
-              <template v-if="showAvailableRoleInfo">
+              <template v-if="availableParticipantTypes.length > 1">
                 <QItem
-                  v-for="participantType in availableparticipantTypes"
+                  v-for="participantType in participantTypes"
                   :key="participantType.role"
                   tag="label"
+                  :class="!roles.includes(participantType.role) || participantType.isFull ? 'text-grey-5' : ''"
                 >
                   <QItemSection avatar>
                     <QRadio
                       v-model="joinParticipantTypeId"
                       :val="participantType.id"
                       color="orange"
+                      :disable="!roles.includes(participantType.role) || participantType.isFull"
                     />
                   </QItemSection>
                   <QItemSection>
                     <QItemLabel>
                       <template v-if="participantType.name">
                         <strong>{{ participantType.name }}</strong><br>
-                        {{ participantType.role }} role
+                        Requires <em>{{ participantType.role }}</em> role
                       </template>
                       <strong v-else>
                         {{ participantType.role }} role
                       </strong>
                     </QItemLabel>
                     <QItemLabel caption>
-                      {{ participantType.description }}
+                      <Markdown
+                        v-if="participantType.description"
+                        :source="participantType.description"
+                      />
                     </QItemLabel>
                   </QItemSection>
                 </QItem>
                 <br>
+              </template>
+              <template v-else-if="onlyAvailableParticipantType">
+                <template v-if="onlyAvailableParticipantType.name">
+                  <strong>{{ onlyAvailableParticipantType.name }}</strong> ({{ onlyAvailableParticipantType.role }})
+                </template>
+                <strong v-else-if="onlyAvailableParticipantType.role !== 'member'">
+                  {{ onlyAvailableParticipantType.role }}
+                </strong>
+                <Markdown
+                  v-if="onlyAvailableParticipantType.description"
+                  :source="onlyAvailableParticipantType.description"
+                />
               </template>
               {{ $t('ACTIVITYLIST.ITEM.JOIN_CONFIRMATION_TEXT', { date: $d(activity.date, 'long') }) }}
             </template>
@@ -135,7 +150,7 @@
                 color="primary"
                 data-autofocus
                 :label="$t('BUTTON.OF_COURSE')"
-                @click="$emit('join', { activityId: activity.id, participantTypeId: joinParticipantTypeId } )"
+                @click="$emit('join', { id: activity.id, participantTypeId: joinParticipantTypeId } )"
               />
             </template>
           </CustomDialog>
@@ -175,26 +190,12 @@
       class="row no-padding full-width justify-end bottom-actions"
     >
       <QBtn
-        v-if="hasJoined"
-        flat
-        no-caps
-        color="negative"
-        class="action-button"
-        @click="leave"
-      >
-        <QIcon
-          name="fas fa-user-times"
-          size="xs"
-          class="q-mr-sm"
-        />
-        <span class="block">Leave {{ activity.activityType.name }}</span>
-      </QBtn>
-      <QBtn
-        v-else
+        v-if="canJoin"
         flat
         no-caps
         :color="activity.activityType.iconProps.color"
         class="action-button"
+        :loading="isJoining"
         @click="join"
       >
         <QIcon
@@ -203,6 +204,22 @@
           class="q-mr-sm"
         />
         <span class="block">Join {{ activity.activityType.name }}</span>
+      </QBtn>
+      <QBtn
+        v-if="canLeave"
+        flat
+        no-caps
+        color="red-4"
+        class="action-button activity-hover"
+        :loading="isLeaving"
+        @click="leave"
+      >
+        <QIcon
+          name="fas fa-user-times"
+          size="xs"
+          class="q-mr-sm"
+        />
+        <span class="block">Leave {{ activity.activityType.name }}</span>
       </QBtn>
       <QSpace />
       <QBtn
@@ -301,22 +318,28 @@ export default {
     }
   },
   computed: {
-    hasJoined () {
-      return this.activity.participants.find(participant => participant.user.isCurrentUser)
+    canJoin () {
+      if (this.activity.isDisabled || this.activity.isUserMember) {
+        return false
+      }
+      return this.availableParticipantTypes.length > 0
+    },
+    canLeave () {
+      return this.activity.isUserMember
     },
     participantTypes () {
       return this.activity.participantTypes.filter(entry => !entry._removed)
     },
-    showRoleInfo () {
-      return this.participantTypes.length > 1 || this.participantTypes[0].name || this.participantTypes[0].description
-    },
-    availableparticipantTypes () {
+    availableParticipantTypes () {
       return this.participantTypes.filter(participantType => {
         return this.roles.includes(participantType.role) && !participantType.isFull
       })
     },
-    showAvailableRoleInfo () {
-      return this.availableparticipantTypes.length > 1 || this.availableparticipantTypes[0].name || this.availableparticipantTypes[0].description
+    onlyAvailableParticipantType () {
+      if (this.availableParticipantTypes.length === 1) {
+        return this.availableParticipantTypes[0]
+      }
+      return null
     },
     icsUrl () {
       // a relative URL would work fine in a browser but
@@ -324,10 +347,20 @@ export default {
       // see https://github.com/karrot-dev/karrot-frontend/issues/2400
       return absoluteURL(`/api/activities/${this.activity.id}/ics/`)
     },
+    isJoining () {
+      // if request is in progress and user is not member yet (watches out for websocket updates!)
+      return this.activity.joinStatus.pending && !this.activity.isUserMember
+    },
+    isLeaving () {
+      // if request is in progress and user has not left yet
+      return this.activity.leaveStatus.pending && this.activity.isUserMember
+    },
   },
   methods: {
     join () {
-      this.joinParticipantTypeId = this.availableparticipantTypes.length > 0 && this.availableparticipantTypes[0].id
+      if (this.joinParticipantTypeId === null) {
+        this.joinParticipantTypeId = this.availableParticipantTypes.length > 0 && this.availableParticipantTypes[0].id
+      }
       this.leaveDialog = false
       this.joinDialog = true
     },
@@ -347,6 +380,14 @@ export default {
 
 <style scoped lang="stylus">
 @import '~variables'
+
+.activity-item
+  .activity-hover
+    visibility hidden
+
+  &:hover
+    .activity-hover
+      visibility visible
 
 .content
   width 100%

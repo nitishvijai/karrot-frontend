@@ -12,56 +12,16 @@
       :key="'participant' + participant.user.id"
       class="relative-position pic-wrapper"
     >
-      <template
-        v-if="false && participant.user.isCurrentUser && !activity.hasStarted"
-      >
-        <CurrentUser
-          v-if="!isLeaving"
-          :size="size"
-          :user="currentUser"
-          :activity="activity"
-          @leave="$emit('leave')"
-        />
-        <div
-          v-else
-          class="emptySlots"
-          style="border-color: black"
-          :style="{ width: size + 'px', height: size + 'px' }"
-        >
-          <QSpinner :size="size - 4" />
-        </div>
-      </template>
-      <template v-else>
-        <div
-          v-if="isNewcomer(participant.user) && !participant.user.isCurrentUser"
-          class="newcomer-box"
-          :title="$t('USERDATA.NEWCOMER_GUIDANCE', { userName: participant.user.displayName })"
-        />
-        <ProfilePicture
-          :user="participant.user"
-          :size="size"
-        />
-      </template>
+      <div
+        v-if="isNewcomer(participant.user) && !participant.user.isCurrentUser"
+        class="newcomer-box"
+        :title="$t('USERDATA.NEWCOMER_GUIDANCE', { userName: participant.user.displayName })"
+      />
+      <ProfilePicture
+        :user="participant.user"
+        :size="size"
+      />
     </div>
-
-    <!--
-    <div
-      v-if="isJoining && !activity.isUserMember"
-      class="emptySlots"
-      style="border-color: black"
-      :style="{ width: size + 'px', height: size + 'px' }"
-    >
-      <QSpinner :size="size - 4" />
-    </div>
-
-    <UserSlot
-      v-if="canJoin"
-      :size="size"
-      :user="currentUser"
-      :show-join="!activity.isUserMember"
-      @join="$emit('join')"
-    />
-    -->
 
     <EmptySlot
       v-for="n in emptySlots"
@@ -70,36 +30,28 @@
     />
 
     <div
-      v-if="noNotShownEmptySlots > 0"
+      v-if="notShownEmptySlotCount > 0"
       class="emptySlots"
       :style="{ width: size + 'px', height: size + 'px' }"
     >
       <div />
-      <span v-if="noNotShownEmptySlots <= 99">+ {{ noNotShownEmptySlots }}</span>
-      <span v-if="noNotShownEmptySlots > 99 && !hasUnlimitedPlaces">...</span>
-      <span v-if="noNotShownEmptySlots > 99 && hasUnlimitedPlaces">+ ∞</span>
+      {{ notShownEmptySlotSymbol }}
     </div>
   </div>
 </template>
 
 <script>
 import ProfilePicture from '@/users/components/ProfilePicture'
-import UserSlot from './UserSlot'
 import EmptySlot from './EmptySlot'
-import CurrentUser from './CurrentUser'
 import { mapGetters } from 'vuex'
 import {
-  QSpinner,
   QResizeObserver,
 } from 'quasar'
 
 export default {
   components: {
     ProfilePicture,
-    UserSlot,
     EmptySlot,
-    CurrentUser,
-    QSpinner,
     QResizeObserver,
   },
   props: {
@@ -128,14 +80,6 @@ export default {
     participants () {
       return this.activity.participants.filter(participant => participant.participantType.id === this.participantType.id)
     },
-    isJoining () {
-      // if request is in progress and user is not member yet (watches out for websocket updates!)
-      return this.activity.joinStatus.pending && !this.activity.isUserMember
-    },
-    isLeaving () {
-      // if request is in progress and user has not left yet
-      return this.activity.leaveStatus.pending && this.activity.isUserMember
-    },
     hasUnlimitedPlaces () {
       return this.maxParticipants === null
     },
@@ -147,9 +91,7 @@ export default {
         return 9999999999
       }
       if (this.participants) {
-        // const removeOne = (this.isJoining || this.canJoin) ? 1 : 0
-        const removeOne = 0
-        return Math.max(this.maxParticipants - this.participants.length - removeOne, 0)
+        return Math.max(this.maxParticipants - this.participants.length, 0)
       }
       return 0
     },
@@ -161,18 +103,14 @@ export default {
       }
       return 0
     },
-    noNotShownEmptySlots () {
+    notShownEmptySlotCount () {
       return this.emptyPlaces - this.emptySlots
     },
-    canJoin () {
-      const activity = this.activity
-      if (activity.isDisabled || activity.isFull || activity.isUserMember) {
-        return false
+    notShownEmptySlotSymbol () {
+      if (this.notShownEmptySlotCount > 99) {
+        return this.hasUnlimitedPlaces ? '+ ∞' : '...'
       }
-      if (this.isJoining || this.isLeaving) {
-        return false
-      }
-      return true
+      return `+ ${this.notShownEmptySlotCount}`
     },
   },
   methods: {

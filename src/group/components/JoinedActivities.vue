@@ -19,6 +19,7 @@
     <ActivityList
       v-if="showActivities"
       :activities="activities"
+      :roles="roles"
       place-link
       dense
       @join="$emit('join', arguments[0])"
@@ -40,6 +41,10 @@ export default {
   },
   props: {
     activities: {
+      required: true,
+      type: Array,
+    },
+    roles: {
       required: true,
       type: Array,
     },

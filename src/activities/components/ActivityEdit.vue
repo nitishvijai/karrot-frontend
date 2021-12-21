@@ -165,6 +165,7 @@
           :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
           icon="info"
           maxlength="500"
+          outlined
           @keyup.ctrl.enter="maybeSave"
         >
           <template #after>
@@ -257,36 +258,17 @@
             <QIcon name="warning" />
             {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
           </div>
-          <QInput
+          <MarkdownInput
             v-model="participantType.description"
             :error="hasError('description')"
             :error-message="firstError('description')"
             :label="$t('CREATEACTIVITY.COMMENT')"
             :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
-            type="textarea"
+            icon="info"
             maxlength="500"
-            autogrow
             outlined
             @keyup.ctrl.enter="maybeSave"
-          >
-            <template #before>
-              <QIcon name="info" />
-            </template>
-            <template #after>
-              <QIcon
-                v-if="series ? series.description !== edit.description : false"
-                name="undo"
-                @click="edit.description = series.description"
-              />
-            </template>
-          </QInput>
-          <div class="row justify-end">
-            <QBtn
-              label="Remove slots"
-              :disable="participantTypes.length === 1"
-              @click="removeSlots(participantType)"
-            />
-          </div>
+          />
         </QCardSection>
       </QCard>
 
@@ -398,7 +380,6 @@ import { formatSeconds } from '@/activities/utils'
 import { objectDiff } from '@/utils/utils'
 import ActivityItem from '@/activities/components/ActivityItem'
 
-import { defaultActionStatusesFor } from '>/helpers' // TODO: don't use stuff from test helpers in main code
 import MarkdownInput from '@/utils/components/MarkdownInput'
 
 export default {
@@ -447,7 +428,13 @@ export default {
       return {
         participants: [], // TODO won't show empty slots otherwise, could fix it in ActivityUsers...
         ...this.edit,
-        ...defaultActionStatusesFor('save', 'join', 'leave'),
+        // fake statuses, just enough for the preview
+        joinStatus: {
+          pending: false,
+        },
+        leaveStatus: {
+          pending: false,
+        },
       }
     },
     roleOptions () {
@@ -557,9 +544,8 @@ export default {
   },
   methods: {
     addSlots () {
-      const existingRoles = this.edit.participantTypes.map(entry => entry.role)
       this.edit.participantTypes.push({
-        role: this.roles.find(role => !existingRoles.includes(role)) || this.roles[0],
+        role: this.roles[0],
         maxParticipants: 2,
       })
     },

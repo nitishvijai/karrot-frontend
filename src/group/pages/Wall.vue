@@ -5,6 +5,7 @@
       <div v-if="joinedActivities.length > 0">
         <JoinedActivities
           :activities="joinedActivities"
+          :roles="roles"
           @join="join"
           @leave="leave"
           @detail="detail"
@@ -13,6 +14,7 @@
       <div v-if="availableActivities.length > 0">
         <AvailableActivities
           :activities="availableActivities"
+          :roles="roles"
           @join="join"
           @leave="leave"
           @detail="detail"
@@ -63,6 +65,7 @@ export default {
       feedbackPossibleStatus: 'activities/fetchFeedbackPossibleStatus',
       conversation: 'currentGroup/conversation',
       user: 'auth/user',
+      roles: 'currentGroup/roles',
     }),
   },
   methods: {
