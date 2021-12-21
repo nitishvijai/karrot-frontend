@@ -165,6 +165,7 @@
           :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
           icon="info"
           maxlength="500"
+          input-style="min-height: auto;"
           outlined
           @keyup.ctrl.enter="maybeSave"
         >
@@ -185,14 +186,26 @@
         </div>
       </div>
 
+      <div class="text-h5">Participants</div>
+
+      <QToggle
+        v-model="advancedMode"
+        label="Use participant types"
+      />
+
       <QCard
         v-for="(participantType, idx) in participantTypes"
         :key="participantType.id || `new-${idx}`"
+        flat
       >
+        <QCardSection v-if="advancedMode">
+          <div class="text-h6">Participant type {{ idx + 1 }}</div>
+        </QCardSection>
         <QCardSection>
           <QInput
+            v-if="advancedMode"
             v-model="participantType.name"
-            label="Purpose"
+            label="Type name"
             :error="hasError('name')"
             :error-message="firstError('name')"
             outlined
@@ -202,6 +215,7 @@
             </template>
           </QInput>
           <QSelect
+            v-if="advancedMode"
             v-model="participantType.role"
             map-options
             emit-value
@@ -259,6 +273,7 @@
             {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
           </div>
           <MarkdownInput
+            v-if="advancedMode"
             v-model="participantType.description"
             :error="hasError('description')"
             :error-message="firstError('description')"
@@ -266,16 +281,30 @@
             :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
             icon="info"
             maxlength="500"
+            input-style="min-height: auto;"
             outlined
             @keyup.ctrl.enter="maybeSave"
           />
+          <div
+            v-if="advancedMode"
+            class="row justify-end"
+          >
+            <QBtn
+              label="Remove participant type"
+              :disable="participantTypes.length === 1"
+              @click="removeSlots(participantType)"
+            />
+          </div>
         </QCardSection>
       </QCard>
 
-      <div class="row justify-end">
+      <div
+        v-if="advancedMode"
+        class="row justify-end"
+      >
         <QBtn
           color="positive"
-          label="Add slots"
+          label="Add participant type"
           @click="addSlots()"
         />
       </div>
@@ -418,9 +447,18 @@ export default {
       ui: 'v4',
       restrictAccess: true,
       showPreview: false,
+      advancedMode: false,
     }
   },
   computed: {
+    // advancedMode: {
+    //   set (val) {
+    //     this._advancedMode = val
+    //   },
+    //   get () {
+    //     return this._advancedMode
+    //   },
+    // },
     participantTypes () {
       return this.edit.participantTypes.filter(entry => !entry._removed)
     },

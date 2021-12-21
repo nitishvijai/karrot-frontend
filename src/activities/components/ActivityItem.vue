@@ -66,7 +66,7 @@
             <template v-if="participantType.name">
               <strong>{{ participantType.name }}</strong> ({{ participantType.role }})
             </template>
-            <strong v-else-if="participantType.role !== 'member'">
+            <strong v-else-if="participantTypes.length > 1 || participantType.role !== 'member'">
               {{ participantType.role }}
             </strong>
             <Markdown
