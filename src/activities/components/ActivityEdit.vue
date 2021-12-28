@@ -186,7 +186,7 @@
         </div>
       </div>
 
-      <div class="text-h5">Participants</div>
+      <pre>isUsingAdvanced: {{ isUsingAdvanced }}</pre>
 
       <QToggle
         v-model="advancedMode"
@@ -202,34 +202,19 @@
           <div class="text-h6">Participant type {{ idx + 1 }}</div>
         </QCardSection>
         <QCardSection>
-          <QInput
+          <MarkdownInput
             v-if="advancedMode"
-            v-model="participantType.name"
-            label="Type name"
-            :error="hasError('name')"
-            :error-message="firstError('name')"
+            v-model="participantType.description"
+            :error="hasError('description')"
+            :error-message="firstError('description')"
+            :label="$t('CREATEACTIVITY.COMMENT')"
+            :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
+            icon="info"
+            maxlength="500"
+            input-style="min-height: auto;"
             outlined
-          >
-            <template #before>
-              <QIcon name="fas fa-key" />
-            </template>
-          </QInput>
-          <QSelect
-            v-if="advancedMode"
-            v-model="participantType.role"
-            map-options
-            emit-value
-            label="Require role"
-            :options="roleOptions"
-            :error="hasError('role')"
-            :error-message="firstError('role')"
-            outlined
-          >
-            <template #before>
-              <QIcon name="fas fa-key" />
-            </template>
-          </QSelect>
-
+            @keyup.ctrl.enter="maybeSave"
+          />
           <QInput
             v-model.number="participantType.maxParticipants"
             type="number"
@@ -272,19 +257,21 @@
             <QIcon name="warning" />
             {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
           </div>
-          <MarkdownInput
+          <QSelect
             v-if="advancedMode"
-            v-model="participantType.description"
-            :error="hasError('description')"
-            :error-message="firstError('description')"
-            :label="$t('CREATEACTIVITY.COMMENT')"
-            :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
-            icon="info"
-            maxlength="500"
-            input-style="min-height: auto;"
+            v-model="participantType.role"
+            map-options
+            emit-value
+            label="Limit to"
+            :options="roleOptions"
+            :error="hasError('role')"
+            :error-message="firstError('role')"
             outlined
-            @keyup.ctrl.enter="maybeSave"
-          />
+          >
+            <template #before>
+              <QIcon name="fas fa-key" />
+            </template>
+          </QSelect>
           <div
             v-if="advancedMode"
             class="row justify-end"
@@ -447,18 +434,31 @@ export default {
       ui: 'v4',
       restrictAccess: true,
       showPreview: false,
-      advancedMode: false,
+      advancedModeValue: false,
     }
   },
   computed: {
-    // advancedMode: {
-    //   set (val) {
-    //     this._advancedMode = val
-    //   },
-    //   get () {
-    //     return this._advancedMode
-    //   },
-    // },
+    advancedMode: {
+      get () {
+        return this.advancedModeValue
+      },
+      set (val) {
+        if (!val && this.isUsingAdvanced) {
+          // TODO: show a dialog to confirm that they will lose some settings
+          // TODO: implement a method to reset it to basic basic mode (keeping _removed entries intact)
+          console.log('TODO: show warning!')
+          return false
+        }
+        this.advancedModeValue = val
+      },
+    },
+    isUsingAdvanced () {
+      // Anything that is using an "advanced" feature
+      return Boolean(
+        this.participantTypes.length > 1 ||
+        this.participantTypes[0].description ||
+        this.participantTypes[0].role !== 'member')
+    },
     participantTypes () {
       return this.edit.participantTypes.filter(entry => !entry._removed)
     },
@@ -477,11 +477,12 @@ export default {
     roleOptions () {
       return [
         'member',
+        'newcomer',
         'editor',
         'approved',
       ].map(name => {
         return {
-          label: name,
+          label: name === 'member' ? 'anyone' : name,
           value: name,
         }
       })
