@@ -156,146 +156,180 @@
         </div>
       </template>
 
-      <div>
-        <MarkdownInput
-          v-model="edit.description"
-          :error="hasError('description')"
-          :error-message="firstError('description')"
-          :label="$t('CREATEACTIVITY.COMMENT')"
-          :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
-          icon="info"
-          maxlength="500"
-          input-style="min-height: auto;"
-          outlined
-          @keyup.ctrl.enter="maybeSave"
-        >
-          <template #after>
-            <QIcon
-              v-if="series ? series.description !== edit.description : false"
-              name="undo"
-              @click="edit.description = series.description"
-            />
-          </template>
-        </MarkdownInput>
-        <div
-          v-if="seriesMeta.isDescriptionChanged"
-          class="q-ml-lg col-12 q-field__bottom text-warning"
-        >
-          <QIcon name="warning" />
-          {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
-        </div>
+      <MarkdownInput
+        v-model="edit.description"
+        :error="hasError('description')"
+        :error-message="firstError('description')"
+        :label="$t('CREATEACTIVITY.COMMENT')"
+        :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
+        icon="info"
+        maxlength="500"
+        input-style="min-height: auto;"
+        outlined
+        @keyup.ctrl.enter="maybeSave"
+      >
+        <template #after>
+          <QIcon
+            v-if="series ? series.description !== edit.description : false"
+            name="undo"
+            @click="edit.description = series.description"
+          />
+        </template>
+      </MarkdownInput>
+      <div
+        v-if="seriesMeta.isDescriptionChanged"
+        class="q-ml-lg col-12 q-field__bottom text-warning"
+      >
+        <QIcon name="warning" />
+        {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
       </div>
-
-      <pre>isUsingAdvanced: {{ isUsingAdvanced }}</pre>
 
       <QToggle
         v-model="advancedMode"
         label="Use participant types"
+        class="q-mt-xs"
       />
 
-      <QCard
-        v-for="(participantType, idx) in participantTypes"
-        :key="participantType.id || `new-${idx}`"
-        flat
-      >
-        <QCardSection v-if="advancedMode">
-          <div class="text-h6">Participant type {{ idx + 1 }}</div>
-        </QCardSection>
-        <QCardSection>
-          <MarkdownInput
-            v-if="advancedMode"
-            v-model="participantType.description"
-            :error="hasError('description')"
-            :error-message="firstError('description')"
-            :label="$t('CREATEACTIVITY.COMMENT')"
-            :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
-            icon="info"
-            maxlength="500"
-            input-style="min-height: auto;"
-            outlined
-            @keyup.ctrl.enter="maybeSave"
+      <template v-if="!advancedMode">
+        <QInput
+          v-model.number="participantTypes[0].maxParticipants"
+          type="number"
+          stack-label
+          outlined
+          class="q-my-md"
+          :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
+          :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
+          :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+          :error="hasError('maxParticipants')"
+          :error-message="firstError('maxParticipants')"
+          input-style="max-width: 100px"
+        >
+          <template #before>
+            <QIcon name="group" />
+          </template>
+          <QSlider
+            v-if="participantTypes[0].maxParticipants > 0 && participantTypes[0].maxParticipants <= 10"
+            v-model="participantTypes[0].maxParticipants"
+            :min="1"
+            :max="10"
+            label
+            markers
+            class="q-mx-sm self-end"
+            style="min-width: 60px"
           />
-          <QInput
-            v-model.number="participantType.maxParticipants"
-            type="number"
-            stack-label
-            outlined
-            class="q-my-md"
-            :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
-            :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
-            :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
-            :error="hasError('maxParticipants')"
-            :error-message="firstError('maxParticipants')"
-            input-style="max-width: 100px"
-          >
-            <template #before>
-              <QIcon name="group" />
-            </template>
-            <QSlider
-              v-if="participantType.maxParticipants > 0 && participantType.maxParticipants <= 10"
-              v-model="participantType.maxParticipants"
-              :min="1"
-              :max="10"
-              label
-              markers
-              class="q-mx-sm self-end"
-              style="min-width: 60px"
+          <!--
+          <template #after>
+            <QIcon
+              v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
+              name="undo"
+              @click="edit.maxParticipants = series.maxParticipants"
             />
-            <!--
-            <template #after>
-              <QIcon
-                v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
-                name="undo"
-                @click="edit.maxParticipants = series.maxParticipants"
+          </template>
+          -->
+        </QInput>
+      </template>
+      <template v-else>
+        <QCard
+          v-for="(participantType, idx) in participantTypes"
+          :key="participantType.id || `new-${idx}`"
+          flat
+        >
+          <QCardSection>
+            <div class="text-h6">
+              Participant type {{ idx + 1 }}
+            </div>
+          </QCardSection>
+          <QCardSection>
+            <MarkdownInput
+              v-model="participantType.description"
+              :error="hasError('description')"
+              :error-message="firstError('description')"
+              :label="$t('CREATEACTIVITY.COMMENT')"
+              :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
+              icon="info"
+              maxlength="500"
+              input-style="min-height: auto;"
+              outlined
+              @keyup.ctrl.enter="maybeSave"
+            />
+            <QInput
+              v-model.number="participantType.maxParticipants"
+              type="number"
+              stack-label
+              outlined
+              class="q-my-md"
+              :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
+              :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
+              :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
+              :error="hasError('maxParticipants')"
+              :error-message="firstError('maxParticipants')"
+              input-style="max-width: 100px"
+            >
+              <template #before>
+                <QIcon name="group" />
+              </template>
+              <QSlider
+                v-if="participantType.maxParticipants > 0 && participantType.maxParticipants <= 10"
+                v-model="participantType.maxParticipants"
+                :min="1"
+                :max="10"
+                label
+                markers
+                class="q-mx-sm self-end"
+                style="min-width: 60px"
               />
-            </template>
-            -->
-          </QInput>
-          <div
-            v-if="seriesMeta.isMaxParticipantsChanged"
-            class="q-ml-lg col-12 q-field__bottom text-warning"
-          >
-            <QIcon name="warning" />
-            {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
-          </div>
-          <QSelect
-            v-if="advancedMode"
-            v-model="participantType.role"
-            map-options
-            emit-value
-            label="Limit to"
-            :options="roleOptions"
-            :error="hasError('role')"
-            :error-message="firstError('role')"
-            outlined
-          >
-            <template #before>
-              <QIcon name="fas fa-key" />
-            </template>
-          </QSelect>
-          <div
-            v-if="advancedMode"
-            class="row justify-end"
-          >
-            <QBtn
-              label="Remove participant type"
-              :disable="participantTypes.length === 1"
-              @click="removeSlots(participantType)"
-            />
-          </div>
-        </QCardSection>
-      </QCard>
+              <!--
+              <template #after>
+                <QIcon
+                  v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
+                  name="undo"
+                  @click="edit.maxParticipants = series.maxParticipants"
+                />
+              </template>
+              -->
+            </QInput>
+            <div
+              v-if="seriesMeta.isMaxParticipantsChanged"
+              class="q-ml-lg col-12 q-field__bottom text-warning"
+            >
+              <QIcon name="warning" />
+              {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
+            </div>
+            <QSelect
+              v-model="participantType.role"
+              map-options
+              emit-value
+              label="Limit to"
+              :options="roleOptions"
+              :error="hasError('role')"
+              :error-message="firstError('role')"
+              outlined
+            >
+              <template #before>
+                <QIcon name="fas fa-key" />
+              </template>
+            </QSelect>
+            <div class="row justify-end">
+              <QBtn
+                label="Remove participant type"
+                :disable="participantTypes.length === 1"
+                @click="removeSlots(participantType)"
+              />
+            </div>
+          </QCardSection>
+        </QCard>
 
-      <div
-        v-if="advancedMode"
-        class="row justify-end"
-      >
-        <QBtn
-          color="positive"
-          label="Add participant type"
-          @click="addSlots()"
-        />
-      </div>
+        <div
+          v-if="advancedMode"
+          class="row justify-end"
+        >
+          <QBtn
+            color="positive"
+            label="Add participant type"
+            @click="addSlots()"
+          />
+        </div>
+      </template>
 
       <div
         v-if="hasNonFieldError"
@@ -322,7 +356,7 @@
           v-if="!isNew"
           type="button"
           :disable="!hasChanged"
-          @click="reset"
+          @click="doReset"
         >
           {{ $t('BUTTON.RESET') }}
         </QBtn>
@@ -445,9 +479,15 @@ export default {
       },
       set (val) {
         if (!val && this.isUsingAdvanced) {
-          // TODO: show a dialog to confirm that they will lose some settings
-          // TODO: implement a method to reset it to basic basic mode (keeping _removed entries intact)
-          console.log('TODO: show warning!')
+          Dialog.create({
+            title: 'Are you sure?',
+            message: 'Your customizations will be lost',
+            cancel: this.$t('BUTTON.CANCEL'),
+            ok: this.$t('BUTTON.YES'),
+          }).onOk(description => {
+            this.resetAdvancedMode()
+            this.advancedModeValue = false
+          })
           return false
         }
         this.advancedModeValue = val
@@ -581,7 +621,29 @@ export default {
       return this.$q.screen.width < 450 || this.$q.screen.height < 450
     },
   },
+  created () {
+    this.advancedModeValue = this.isUsingAdvanced
+  },
   methods: {
+    doReset () {
+      this.reset()
+      this.advancedModeValue = this.isUsingAdvanced
+    },
+    resetAdvancedMode () {
+      // To reset we need to:
+      // 1. keep only 1 participant type
+      // 2. preserve any entries with _removed
+      // 3. remove any customized fields
+      this.edit.participantTypes = this.edit.participantTypes.filter((participantType, idx) => {
+        return participantType._removed || idx === 0
+      }).map(participantType => {
+        return {
+          ...participantType,
+          description: null,
+          role: 'member',
+        }
+      })
+    },
     addSlots () {
       this.edit.participantTypes.push({
         role: this.roles[0],

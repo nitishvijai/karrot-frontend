@@ -58,25 +58,27 @@
           v-if="activity.description"
           :source="activity.description"
         />
-        <div class="q-mt-sm q-mb-none full-width">
+        <div class="q-mt-none q-mb-none full-width column q-gutter-y-md">
           <div
             v-for="participantType in participantTypes"
             :key="participantType.id"
+            class="col"
+            :class="participantTypes.length > 1 ? 'multiple-types' : ''"
           >
-            <template v-if="participantType.name">
-              <strong>{{ participantType.name }}</strong> ({{ participantType.role }})
-            </template>
-            <strong v-else-if="participantTypes.length > 1 || participantType.role !== 'member'">
-              {{ participantType.role }}
-            </strong>
             <Markdown
               v-if="participantType.description"
-              :source="participantType.description"
+              :source="participantType.description"em
             />
             <ActivityUsers
               :activity="activity"
               :participant-type="participantType"
             />
+            <div
+              v-if="participantType.role !== 'member'"
+              class="q-my-xs"
+            >
+              <em>Limited to <strong>{{ participantType.role }}</strong></em>
+            </div>
           </div>
           <CustomDialog v-model="joinDialog">
             <template #title>
@@ -88,7 +90,7 @@
               {{ $t('ACTIVITYLIST.ITEM.JOIN_CONFIRMATION_HEADER', { activityType: activity.activityType.translatedName }) }}
             </template>
             <template #message>
-              <template v-if="availableParticipantTypes.length > 1">
+              <template v-if="participantTypes.length > 1">
                 <QItem
                   v-for="participantType in participantTypes"
                   :key="participantType.role"
@@ -105,31 +107,19 @@
                   </QItemSection>
                   <QItemSection>
                     <QItemLabel>
-                      <template v-if="participantType.name">
-                        <strong>{{ participantType.name }}</strong><br>
-                        Requires <em>{{ participantType.role }}</em> role
-                      </template>
-                      <strong v-else>
-                        {{ participantType.role }} role
-                      </strong>
-                    </QItemLabel>
-                    <QItemLabel caption>
                       <Markdown
                         v-if="participantType.description"
                         :source="participantType.description"
                       />
+                    </QItemLabel>
+                    <QItemLabel v-if="participantType.role !== 'member'">
+                      <em>Limited to <strong>{{ participantType.role }}</strong></em>
                     </QItemLabel>
                   </QItemSection>
                 </QItem>
                 <br>
               </template>
               <template v-else-if="onlyAvailableParticipantType">
-                <template v-if="onlyAvailableParticipantType.name">
-                  <strong>{{ onlyAvailableParticipantType.name }}</strong> ({{ onlyAvailableParticipantType.role }})
-                </template>
-                <strong v-else-if="onlyAvailableParticipantType.role !== 'member'">
-                  {{ onlyAvailableParticipantType.role }}
-                </strong>
                 <Markdown
                   v-if="onlyAvailableParticipantType.description"
                   :source="onlyAvailableParticipantType.description"
@@ -388,6 +378,10 @@ export default {
   &:hover
     .activity-hover
       visibility visible
+
+.multiple-types
+  padding-left 8px
+  border-left 4px solid #ccc
 
 .content
   width 100%
