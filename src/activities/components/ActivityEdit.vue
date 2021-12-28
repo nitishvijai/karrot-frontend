@@ -220,6 +220,7 @@
             type="number"
             stack-label
             outlined
+            class="q-my-md"
             :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
             :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
             :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
