@@ -77,7 +77,7 @@
               v-if="participantType.role !== 'member'"
               class="q-my-xs"
             >
-              <em>Limited to <strong>{{ participantType.role }}</strong></em>
+              <em>Open for <strong>{{ participantType.role }}</strong></em>
             </div>
           </div>
           <CustomDialog v-model="joinDialog">
@@ -113,7 +113,7 @@
                       />
                     </QItemLabel>
                     <QItemLabel v-if="participantType.role !== 'member'">
-                      <em>Limited to <strong>{{ participantType.role }}</strong></em>
+                      <em>Open for <strong>{{ participantType.role }}</strong></em>
                     </QItemLabel>
                   </QItemSection>
                 </QItem>

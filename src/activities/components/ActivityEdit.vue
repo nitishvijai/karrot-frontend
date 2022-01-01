@@ -190,9 +190,9 @@
         class="q-mt-xs"
       />
 
-      <template v-if="!advancedMode">
+      <template v-if="simpleParticipantType">
         <QInput
-          v-model.number="participantTypes[0].maxParticipants"
+          v-model.number="simpleParticipantType.maxParticipants"
           type="number"
           stack-label
           outlined
@@ -208,8 +208,8 @@
             <QIcon name="group" />
           </template>
           <QSlider
-            v-if="participantTypes[0].maxParticipants > 0 && participantTypes[0].maxParticipants <= 10"
-            v-model="participantTypes[0].maxParticipants"
+            v-if="simpleParticipantType.maxParticipants > 0 && simpleParticipantType.maxParticipants <= 10"
+            v-model="simpleParticipantType.maxParticipants"
             :min="1"
             :max="10"
             label
@@ -217,134 +217,21 @@
             class="q-mx-sm self-end"
             style="min-width: 60px"
           />
-          <!--
           <template #after>
             <QIcon
-              v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
+              v-if="series ? series.maxParticipants !== simpleParticipantType.maxParticipants : false"
               name="undo"
-              @click="edit.maxParticipants = series.maxParticipants"
+              @click="simpleParticipantType.maxParticipants = series.maxParticipants"
             />
           </template>
-          -->
         </QInput>
       </template>
       <template v-else>
-        <QCard
-          v-for="(participantType, idx) in participantTypes"
-          :key="participantType.id || `new-${idx}`"
-          flat
-        >
-          <QCardSection>
-            <div class="text-h6">
-              Participant type {{ idx + 1 }}
-            </div>
-          </QCardSection>
-          <QCardSection>
-            <MarkdownInput
-              v-model="participantType.description"
-              :error="hasError('description')"
-              :error-message="firstError('description')"
-              :label="$t('CREATEACTIVITY.COMMENT')"
-              :hint="$t('CREATEACTIVITY.COMMENT_HELPER')"
-              icon="info"
-              maxlength="500"
-              input-style="min-height: auto;"
-              outlined
-              @keyup.ctrl.enter="maybeSave"
-            />
-            <QInput
-              v-model.number="participantType.maxParticipants"
-              type="number"
-              stack-label
-              outlined
-              class="q-my-md"
-              :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
-              :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
-              :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
-              :error="hasError('maxParticipants')"
-              :error-message="firstError('maxParticipants')"
-              input-style="max-width: 100px"
-            >
-              <template #before>
-                <QIcon name="group" />
-              </template>
-              <QSlider
-                v-if="participantType.maxParticipants > 0 && participantType.maxParticipants <= 10"
-                v-model="participantType.maxParticipants"
-                :min="1"
-                :max="10"
-                label
-                markers
-                class="q-mx-sm self-end"
-                style="min-width: 60px"
-              />
-              <!--
-              <template #after>
-                <QIcon
-                  v-if="series ? series.maxParticipants !== edit.maxParticipants : false"
-                  name="undo"
-                  @click="edit.maxParticipants = series.maxParticipants"
-                />
-              </template>
-              -->
-            </QInput>
-            <div
-              v-if="seriesMeta.isMaxParticipantsChanged"
-              class="q-ml-lg col-12 q-field__bottom text-warning"
-            >
-              <QIcon name="warning" />
-              {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
-            </div>
-            <QSelect
-              v-model="participantType.role"
-              map-options
-              emit-value
-              label="Open to"
-              :options="roleOptions"
-              :error="hasError('role')"
-              :error-message="firstError('role')"
-              outlined
-              :behavior="smallScreen ? 'dialog' : 'menu'"
-            >
-              <template #before>
-                <QIcon name="fas fa-key" />
-              </template>
-              <template #option="{ itemProps, itemEvents, opt: { label, description } }">
-                <QItem
-                  v-bind="itemProps"
-                  v-on="itemEvents"
-                >
-                  <QItemSection>
-                    <QItemLabel>
-                      {{ label }}
-                    </QItemLabel>
-                    <QItemLabel caption>
-                      {{ description }}
-                    </QItemLabel>
-                  </QItemSection>
-                </QItem>
-              </template>
-            </QSelect>
-            <div class="row justify-end">
-              <QBtn
-                label="Remove participant type"
-                :disable="participantTypes.length === 1"
-                @click="removeSlots(participantType)"
-              />
-            </div>
-          </QCardSection>
-        </QCard>
-
-        <div
-          v-if="advancedMode"
-          class="row justify-end"
-        >
-          <QBtn
-            color="positive"
-            label="Add participant type"
-            @click="addSlots()"
-          />
-        </div>
+        <ParticipantTypesEdit
+          v-model="edit.participantTypes"
+          :roles="roles"
+          :series-meta="seriesMeta"
+        />
       </template>
 
       <div
@@ -451,10 +338,12 @@ import { objectDiff } from '@/utils/utils'
 import ActivityItem from '@/activities/components/ActivityItem'
 
 import MarkdownInput from '@/utils/components/MarkdownInput'
+import ParticipantTypesEdit from '@/activities/components/ParticipantTypesEdit'
 
 export default {
   name: 'ActivityEdit',
   components: {
+    ParticipantTypesEdit,
     ActivityItem,
     QDate,
     QTime,
@@ -518,11 +407,17 @@ export default {
     isUsingAdvanced () {
       // Anything that is using an "advanced" feature
       return Boolean(
-        this.participantTypes.length > 1 ||
-        this.participantTypes[0].description ||
-        this.participantTypes[0].role !== 'member')
+        this.visibleParticipantTypes.length > 1 ||
+        this.visibleParticipantTypes[0].description ||
+        this.visibleParticipantTypes[0].role !== 'member')
     },
-    participantTypes () {
+    simpleParticipantType () {
+      if (!this.advancedModeValue && this.visibleParticipantTypes.length === 1) {
+        return this.visibleParticipantTypes[0]
+      }
+      return null
+    },
+    visibleParticipantTypes () {
       return this.edit.participantTypes.filter(entry => !entry._removed)
     },
     previewActivity () {
@@ -663,34 +558,19 @@ export default {
       this.advancedModeValue = this.isUsingAdvanced
     },
     resetAdvancedMode () {
-      // To reset we need to:
-      // 1. keep only 1 participant type
-      // 2. preserve any entries with _removed
-      // 3. remove any customized fields
-      this.edit.participantTypes = this.edit.participantTypes.filter((participantType, idx) => {
-        return participantType._removed || idx === 0
-      }).map(participantType => {
-        return {
-          ...participantType,
-          description: null,
-          role: 'member',
-        }
-      })
-    },
-    addSlots () {
-      this.edit.participantTypes.push({
-        role: this.roles[0],
-        maxParticipants: 2,
-      })
-    },
-    removeSlots (participantType) {
-      if (participantType.id) {
-        this.$set(participantType, '_removed', true)
-      }
-      else {
-        const idx = this.edit.participantTypes.indexOf(participantType)
-        this.edit.participantTypes.splice(idx, 1)
-      }
+      this.edit.participantTypes = [
+        // A fresh new entry
+        {
+          role: this.roles[0],
+          maxParticipants: 2,
+        },
+        // Already marked removed
+        ...this.edit.participantTypes.filter(participantType => participantType._removed),
+        // Ones we need to mark as removed
+        ...this.edit.participantTypes
+          .filter(participantType => participantType.id)
+          .map(participantType => ({ ...participantType, _removed: true })),
+      ]
     },
     futureDates (dateString) {
       return date.extractDate(`${dateString} 23:59`, 'YYYY/MM/DD HH:mm') > this.now
