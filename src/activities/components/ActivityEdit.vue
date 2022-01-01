@@ -299,14 +299,30 @@
               v-model="participantType.role"
               map-options
               emit-value
-              label="Limit to"
+              label="Open to"
               :options="roleOptions"
               :error="hasError('role')"
               :error-message="firstError('role')"
               outlined
+              :behavior="smallScreen ? 'dialog' : 'menu'"
             >
               <template #before>
                 <QIcon name="fas fa-key" />
+              </template>
+              <template #option="{ itemProps, itemEvents, opt: { label, description } }">
+                <QItem
+                  v-bind="itemProps"
+                  v-on="itemEvents"
+                >
+                  <QItemSection>
+                    <QItemLabel>
+                      {{ label }}
+                    </QItemLabel>
+                    <QItemLabel caption>
+                      {{ description }}
+                    </QItemLabel>
+                  </QItemSection>
+                </QItem>
               </template>
             </QSelect>
             <div class="row justify-end">
@@ -417,6 +433,9 @@ import {
   QSpace,
   Dialog,
   date,
+  QItem,
+  QItemSection,
+  QItemLabel,
 } from 'quasar'
 
 import editMixin from '@/utils/mixins/editMixin'
@@ -452,6 +471,9 @@ export default {
     QCardActions,
     QSpace,
     MarkdownInput,
+    QItem,
+    QItemSection,
+    QItemLabel,
   },
   mixins: [editMixin, statusMixin],
   props: {
@@ -517,16 +539,27 @@ export default {
     },
     roleOptions () {
       return [
-        'member',
-        'newcomer',
-        'editor',
-        'approved',
-      ].map(name => {
-        return {
-          label: name === 'member' ? 'anyone' : name,
-          value: name,
-        }
-      })
+        {
+          label: 'Anyone',
+          value: 'member',
+          description: 'Anyone in the group',
+        },
+        {
+          label: 'Newcomer',
+          value: 'newcomer',
+          description: 'People that haven\'t yet got any other roles',
+        },
+        {
+          label: 'Approved',
+          value: 'approved',
+          description: 'People that have been trusted with approved role',
+        },
+        {
+          label: 'Editor',
+          value: 'editor',
+          description: 'People that have been trusted in the group as an editor',
+        },
+      ]
     },
     activityType () {
       return this.value.activityType
