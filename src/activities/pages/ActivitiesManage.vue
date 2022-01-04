@@ -39,6 +39,7 @@
         <ActivitySeriesEdit
           :value="newSeries"
           :status="seriesCreateStatus"
+          :roles="roles"
           @save="saveNewSeries"
           @cancel="cancelNewSeries"
           @reset="resetNewSeries"
@@ -73,6 +74,7 @@
             <ActivitySeriesEdit
               :value="series"
               :status="series.saveStatus"
+              :roles="roles"
               @save="saveSeries"
               @destroy="destroySeries"
               @reset="resetActivity"
@@ -354,7 +356,13 @@ export default {
     createNewSeries (activityType) {
       this.newSeries = {
         activityType,
-        maxParticipants: 2,
+        participantTypes: [
+          {
+            role: 'member',
+            maxParticipants: 2,
+            description: '',
+          },
+        ],
         description: '',
         startDate: addHours(startOfTomorrow(), 10),
         duration: null,

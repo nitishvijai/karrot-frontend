@@ -249,32 +249,6 @@
         </template>
       </QInput>
 
-      <QInput
-        v-model.number="edit.maxParticipants"
-        type="number"
-        stack-label
-        :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
-        :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
-        :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
-        :error="hasError('maxParticipants')"
-        :error-message="firstError('maxParticipants')"
-        input-style="max-width: 100px"
-      >
-        <template #before>
-          <QIcon name="group" />
-        </template>
-        <QSlider
-          v-if="edit.maxParticipants > 0 && edit.maxParticipants <= 10"
-          v-model="edit.maxParticipants"
-          :min="1"
-          :max="10"
-          label
-          markers
-          class="q-mx-sm self-end"
-          style="min-width: 60px"
-        />
-      </QInput>
-
       <MarkdownInput
         v-model="edit.description"
         :error="hasError('description')"
@@ -284,6 +258,11 @@
         icon="info"
         maxlength="500"
         @keyup.ctrl.enter="maybeSave"
+      />
+
+      <ParticipantTypesEdit
+        v-model="edit.participantTypes"
+        :roles="roles"
       />
 
       <div
@@ -362,6 +341,7 @@ import addSeconds from 'date-fns/addSeconds'
 import addDays from 'date-fns/addDays'
 import differenceInSeconds from 'date-fns/differenceInSeconds'
 import MarkdownInput from '@/utils/components/MarkdownInput'
+import ParticipantTypesEdit from '@/activities/components/ParticipantTypesEdit'
 
 export default {
   components: {
@@ -382,8 +362,15 @@ export default {
     QToggle,
     QDate,
     MarkdownInput,
+    ParticipantTypesEdit,
   },
   mixins: [editMixin, statusMixin],
+  props: {
+    roles: {
+      type: Array,
+      required: true,
+    },
+  },
   computed: {
     activityType () {
       return this.value.activityType

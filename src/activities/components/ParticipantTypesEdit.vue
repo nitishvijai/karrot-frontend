@@ -206,8 +206,9 @@ export default {
       default: null,
     },
     seriesMeta: {
-      required: true,
+      required: false,
       type: Object,
+      default: () => ({}),
     },
     roles: {
       type: Array,
@@ -313,19 +314,21 @@ export default {
       }
     },
     resetAdvancedMode () {
-      this.edit.participantTypes = [
+      this.participantTypes = [
         // A fresh new entry
         {
           role: this.roles[0],
           maxParticipants: 2,
         },
         // Already marked removed
-        ...this.edit.participantTypes.filter(participantType => participantType._removed),
+        ...this.participantTypes.filter(participantType => participantType._removed),
         // Ones we need to mark as removed
-        ...this.edit.participantTypes
+        ...this.participantTypes
           .filter(participantType => participantType.id)
           .map(participantType => ({ ...participantType, _removed: true })),
       ]
+      // TODO: not sure if this is needed, but I think so as we re-assign the value (or could just modify array...)
+      this.$emit('input', this.participantTypes)
     },
   },
 }
