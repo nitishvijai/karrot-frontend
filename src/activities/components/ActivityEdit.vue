@@ -184,55 +184,12 @@
         {{ $t('CREATEACTIVITY.DIFFERS_WARNING') }}
       </div>
 
-      <QToggle
-        v-model="advancedMode"
-        label="Use participant types"
-        class="q-mt-xs"
+      <ParticipantTypesEdit
+        v-model="edit.participantTypes"
+        :roles="roles"
+        :series="series"
+        :series-meta="seriesMeta"
       />
-
-      <template v-if="simpleParticipantType">
-        <QInput
-          v-model.number="simpleParticipantType.maxParticipants"
-          type="number"
-          stack-label
-          outlined
-          class="q-my-md"
-          :label="$t('CREATEACTIVITY.MAX_PARTICIPANTS')"
-          :hint="$t('CREATEACTIVITY.MAX_PARTICIPANTS_HELPER')"
-          :placeholder="$t('CREATEACTIVITY.UNLIMITED')"
-          :error="hasError('maxParticipants')"
-          :error-message="firstError('maxParticipants')"
-          input-style="max-width: 100px"
-        >
-          <template #before>
-            <QIcon name="group" />
-          </template>
-          <QSlider
-            v-if="simpleParticipantType.maxParticipants > 0 && simpleParticipantType.maxParticipants <= 10"
-            v-model="simpleParticipantType.maxParticipants"
-            :min="1"
-            :max="10"
-            label
-            markers
-            class="q-mx-sm self-end"
-            style="min-width: 60px"
-          />
-          <template #after>
-            <QIcon
-              v-if="series ? series.maxParticipants !== simpleParticipantType.maxParticipants : false"
-              name="undo"
-              @click="simpleParticipantType.maxParticipants = series.maxParticipants"
-            />
-          </template>
-        </QInput>
-      </template>
-      <template v-else>
-        <ParticipantTypesEdit
-          v-model="edit.participantTypes"
-          :roles="roles"
-          :series-meta="seriesMeta"
-        />
-      </template>
 
       <div
         v-if="hasNonFieldError"
@@ -380,46 +337,9 @@ export default {
       ui: 'v4',
       restrictAccess: true,
       showPreview: false,
-      advancedModeValue: false,
     }
   },
   computed: {
-    advancedMode: {
-      get () {
-        return this.advancedModeValue
-      },
-      set (val) {
-        if (!val && this.isUsingAdvanced) {
-          Dialog.create({
-            title: 'Are you sure?',
-            message: 'Your customizations will be lost',
-            cancel: this.$t('BUTTON.CANCEL'),
-            ok: this.$t('BUTTON.YES'),
-          }).onOk(description => {
-            this.resetAdvancedMode()
-            this.advancedModeValue = false
-          })
-          return false
-        }
-        this.advancedModeValue = val
-      },
-    },
-    isUsingAdvanced () {
-      // Anything that is using an "advanced" feature
-      return Boolean(
-        this.visibleParticipantTypes.length > 1 ||
-        this.visibleParticipantTypes[0].description ||
-        this.visibleParticipantTypes[0].role !== 'member')
-    },
-    simpleParticipantType () {
-      if (!this.advancedModeValue && this.visibleParticipantTypes.length === 1) {
-        return this.visibleParticipantTypes[0]
-      }
-      return null
-    },
-    visibleParticipantTypes () {
-      return this.edit.participantTypes.filter(entry => !entry._removed)
-    },
     previewActivity () {
       return {
         ...this.edit,
@@ -549,28 +469,10 @@ export default {
       return this.$q.screen.width < 450 || this.$q.screen.height < 450
     },
   },
-  created () {
-    this.advancedModeValue = this.isUsingAdvanced
-  },
   methods: {
     doReset () {
       this.reset()
-      this.advancedModeValue = this.isUsingAdvanced
-    },
-    resetAdvancedMode () {
-      this.edit.participantTypes = [
-        // A fresh new entry
-        {
-          role: this.roles[0],
-          maxParticipants: 2,
-        },
-        // Already marked removed
-        ...this.edit.participantTypes.filter(participantType => participantType._removed),
-        // Ones we need to mark as removed
-        ...this.edit.participantTypes
-          .filter(participantType => participantType.id)
-          .map(participantType => ({ ...participantType, _removed: true })),
-      ]
+      // TODO: reset in nested ParticipantTypesEdit
     },
     futureDates (dateString) {
       return date.extractDate(`${dateString} 23:59`, 'YYYY/MM/DD HH:mm') > this.now
